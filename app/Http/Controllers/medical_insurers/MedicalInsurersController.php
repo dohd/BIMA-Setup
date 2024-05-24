@@ -16,7 +16,8 @@ class MedicalInsurersController extends Controller
      */
     public function index()
     {
-        return view('medical_insurers.index');
+        $medical_insurers = MedicalInsurer::get();
+        return view('medical_insurers.index', compact('medical_insurers'));
     }
 
     /**
@@ -27,7 +28,7 @@ class MedicalInsurersController extends Controller
     public function create()
     {   
         $medical_insurers = MedicalInsurer::get();
-        return view('medical_insurers.create', compact('medical_insurers'));
+        return view('medical_insurers.index', compact('medical_insurers'));
     }
 
     /**
@@ -38,26 +39,7 @@ class MedicalInsurersController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            
-        ]);
-       
-        try {
-            $input = inputClean($request->except('_token'));
-            foreach ($input as $key => $value) {
-                $keys = [
-                    'team_total', 'guest_total', 'grant_amount', 'retreat_leader_total', 'online_meeting_team_total', 'activities_total', 'summit_leader_total',
-                    'recruit_total', 'initiative_total', 'team_mission_total', 'choir_member_total', 'other_activities_total',
-                ];
-                if (in_array($key, $keys)) {
-                    $input[$key] = numberClean($value);
-                }
-            }
-
-            return redirect(route('medical_insurers.index'))->with(['success' => 'Medical Insurer created successfully']);
-        } catch (\Throwable $th) {
-            return errorHandler('Error creating Medical Insurer! ', $th);
-        }
+        // 
     }
 
     /**
@@ -66,9 +48,10 @@ class MedicalInsurersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Attendance $attendance)
+    public function show(MedicalInsurer $medical_insurer)
     {
-        return view('medical_insurers.view', compact('attendance'));
+        $medical_insurers = MedicalInsurer::get();
+        return view('medical_insurers.index', compact('medical_insurer', 'medical_insurers'));
     }
 
     /**
@@ -77,9 +60,9 @@ class MedicalInsurersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(Attendance $attendance)
+    public function edit(MedicalInsurer $medical_insurer)
     {
-        return view('medical_insurers.edit', compact('attendance'));
+        return view('medical_insurers.edit', compact('medical_insurer'));
     }
 
     /**
@@ -91,26 +74,7 @@ class MedicalInsurersController extends Controller
      */
     public function update(Request $request, Attendance $attendance)
     { 
-        $request->validate([
-            
-        ]);
-
-        try {     
-            $input = inputClean($request->except('_token'));
-            foreach ($input as $key => $value) {
-                $keys = [
-                    'team_total', 'guest_total', 'grant_amount', 'retreat_leader_total', 'online_meeting_team_total', 'activities_total', 'summit_leader_total',
-                    'recruit_total', 'initiative_total', 'team_mission_total', 'choir_member_total', 'other_activities_total',
-                ];
-                if (in_array($key, $keys)) {
-                    $input[$key] = numberClean($value);
-                }
-            }
-
-            return redirect(route('medical_insurers.index'))->with(['success' => 'Medical Insurer updated successfully']);              
-        } catch (\Throwable $th) {
-            return errorHandler('Error updating Medical Insurer! ', $th);
-        }
+        // 
     }
 
     /**
@@ -121,11 +85,6 @@ class MedicalInsurersController extends Controller
      */
     public function destroy(Attendance $attendance)
     {
-        try {
-            $attendance->delete();
-            return redirect(route('medical_insurers.index'))->with(['success' => 'Medical Insurer deleted successfully']);
-        } catch (\Throwable $th) {
-            return errorHandler('Error deleting Medical Insurer! ', $th);
-        }
+        // 
     }
 }

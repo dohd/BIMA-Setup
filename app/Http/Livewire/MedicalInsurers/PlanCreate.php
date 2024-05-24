@@ -2,18 +2,28 @@
 
 namespace App\Http\Livewire\MedicalInsurers;
 
+use App\Models\medical_insurers\MedicalPlan;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class PlanCreate extends Component
 {
+    public $medical_insurer;
     public Collection $inputs;
 
     public function mount()
     { 
-        $this->fill([
-            'inputs' => collect([['plan_name' => '']]),
-        ]);
+        $plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
+        if ($plans->count()) {
+            $this->fill([
+                'inputs' => collect($plans->toArray()),
+            ]);
+        } else {
+            $this->fill([
+                'inputs' => collect([['plan_name' => '']]),
+            ]);
+        }
     }
 
     protected $rules = [
@@ -26,11 +36,28 @@ class PlanCreate extends Component
 
     public function save()
     { 
-        $this->validate();
+        $this->validate();        
+        
+        try {
+            DB::beginTransaction();
 
-        // 
+            $data = array_map(function($v) {
+                return [
+                    'plan_name' => $v['plan_name'],
+                    'insurer_id' => $this->medical_insurer->id,
+                    'user_id' => auth()->user()->id,
+                ];
+            }, $this->inputs->toArray());
+            
+            $this->medical_insurer->plans()->delete();
+            MedicalPlan::insert($data);
 
-        return redirect(route('medical_insurers.create'))->with('success', 'Successfully updated');
+            DB::commit();
+        } catch (\Throwable $th) {
+            return errorHandler('Error updating medical plans', $th);
+        }
+
+        return redirect(route('medical_insurers.show', $this->medical_insurer))->with('success', 'Successfully updated');
     }
 
     public function addRow()

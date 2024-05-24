@@ -11,7 +11,7 @@
     <li class="nav-heading">Setup Options</li>
     <!-- medical insurers -->
     <li class="nav-item">
-      <a class="nav-link collapsed" href="{{ route('medical_insurers.create') }}">
+      <a class="nav-link collapsed" href="{{ route('medical_insurers.index') }}">
         <i class="bi bi-clipboard2-pulse"></i><span>Medical Insurers</span>
       </a>
     </li>

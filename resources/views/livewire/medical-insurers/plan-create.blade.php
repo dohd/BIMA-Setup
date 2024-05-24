@@ -25,7 +25,9 @@
     </div>
     
     <hr>
-    <div class="text-center">
-        <button type="button" wire:click="save" class="btn btn-primary">Save & Continue >></button>
-    </div>
+    @if (@$medical_insurer)
+        <div class="text-center">
+            <button type="button" wire:click="save" class="btn btn-primary">Save & Continue >></button>
+        </div>
+    @endif
 </form>

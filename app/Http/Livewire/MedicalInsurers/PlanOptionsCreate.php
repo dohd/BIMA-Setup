@@ -2,11 +2,13 @@
 
 namespace App\Http\Livewire\MedicalInsurers;
 
+use App\Models\medical_insurers\MedicalPlan;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class PlanOptionsCreate extends Component
 {
+    public $medical_insurer;
     public $plan_id;
     public Collection $medical_plans;
     public Collection $max_fam_sizes;
@@ -18,10 +20,11 @@ class PlanOptionsCreate extends Component
 
     public function mount()
     { 
+        $plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
+        if ($plans->count()) $this->medical_plans = $plans;
+        else $this->medical_plans = collect([]);
+
         $this->fill([
-            'medical_plans' => collect([
-                (object) ['id' => 1, 'plan_name' => 'Afya Jumla'],
-            ]),
             'max_fam_sizes' => collect([
                 (object) ['id' => 1, 'unit' => 'M+'],
             ]),

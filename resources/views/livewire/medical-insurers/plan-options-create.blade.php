@@ -4,7 +4,7 @@
         <div class="col-md-6 col-12" wire:ignore>
             <label for="medical_plans">Medical Plan<span class="text-danger">*</span></label>
             <select wire:model="plan_id" class="form-select" data-placeholder="Choose Medical Plan">
-                <option value=""></option>
+                <option value="">-- Choose Medical Plan --</option>
                 @foreach ($medical_plans as $i => $item)
                     <option value="{{ @$item->id }}">{{ @$item->plan_name }}</option>
                 @endforeach
@@ -52,9 +52,9 @@
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
                                     <select wire:key="max-fam-sizes-{{$i}}" wire:model.defer="inpatients.{{$i}}.max_fam_size" class="form-select" data-placeholder="Choose Size" required>
-                                        <option value=""></option>
+                                        <option wire:key="opt-max-fam-sizes-{{$i}}" value="">-- Choose Size --</option>
                                         @foreach ($max_fam_sizes as $j => $item)
-                                            <option value="{{ @$item->id }}">{{ @$item->unit }}</option>
+                                            <option wire:key="opt-max-fam-sizes-{{$i+1}}" value="{{ @$item->id }}">{{ @$item->unit }}</option>
                                         @endforeach
                                     </select>
                                 </div>
