@@ -15,6 +15,7 @@ class PlanCreate extends Component
     public function mount()
     { 
         $this->inputs = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
+        if (!$this->inputs->count()) $this->inputs = new Collection([MedicalPlan::make()]);
     }
 
     protected $rules = [
