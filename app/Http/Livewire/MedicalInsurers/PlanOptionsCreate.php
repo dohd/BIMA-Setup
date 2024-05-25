@@ -3,15 +3,19 @@
 namespace App\Http\Livewire\MedicalInsurers;
 
 use App\Models\medical_insurers\MedicalPlan;
+use App\Models\medical_insurers\PlanOption;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class PlanOptionsCreate extends Component
 {
     public $medical_insurer;
     public $plan_id;
-    public Collection $medical_plans;
-    public Collection $max_fam_sizes;
+    public $medical_plans = [];
+    public $max_fam_sizes = [];
+    
     public Collection $inpatients;
     public Collection $outpatients;
     public Collection $maternities;
@@ -20,59 +24,152 @@ class PlanOptionsCreate extends Component
 
     public function mount()
     { 
-        $plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
-        if ($plans->count()) $this->medical_plans = $plans;
-        else $this->medical_plans = collect([]);
-
+        $this->medical_plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
+        $this->max_fam_sizes = [
+            ['id' => 1, 'unit' => 'M+'],
+            ['id' => 2, 'unit' => 'M+2'],
+            ['id' => 3, 'unit' => 'M+3'],
+        ];
+        
         $this->fill([
-            'max_fam_sizes' => collect([
-                (object) ['id' => 1, 'unit' => 'M+'],
-            ]),
-            'inpatients' => collect([
-                (object) ['inpatient_label' => '', 'inpatient_option' => 0, 'inpatient_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'outpatients' => collect([
-                (object) ['outpatient_label' => '', 'outpatient_option' => 0, 'outpatient_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'maternities' => collect([
-                (object) ['maternity_label' => '', 'maternity_option' => 0, 'maternity_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'dentals' => collect([
-                (object) ['dental_label' => '', 'dental_option' => 0, 'dental_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'opticals' => collect([
-                (object) ['optical_label' => '', 'optical_option' => 0, 'optical_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
+            'inpatients' => new Collection([PlanOption::make()]),
+            'outpatients' => new Collection([PlanOption::make()]),
+            'maternities' => new Collection([PlanOption::make()]),
+            'dentals' => new Collection([PlanOption::make()]),
+            'opticals' => new Collection([PlanOption::make()]),
         ]);
     }
 
     protected $rules = [
-        // 'inputs.*.plan_name' => 'required',
         'plan_id' => 'required',
+        'inpatients.*.limit' => 'required',
+        'inpatients.*.max_fam_size_id' => 'required',
+        'outpatients.*.limit' => 'required',
+        'outpatients.*.max_fam_size_id' => 'required',
+        'maternities.*.limit' => 'required',
+        'maternities.*.max_fam_size_id' => 'required',
+        'dentals.*.limit' => 'required',
+        'dentals.*.max_fam_size_id' => 'required',
+        'opticals.*.limit' => 'required',
+        'opticals.*.max_fam_size_id' => 'required',
     ];
     
     protected $messages = [
-        // 'inputs.*.plan_name.required' => 'This plan name field is required!',
-        'plan_id.required' => 'This plan name field is required',
+        'plan_id.required' => 'medical plan field is required!',
+        'inpatients.*.limit.required' => 'limit field is required!',
+        'inpatients.*.max_fam_size_id.required' => 'max family size field is required!',
+        'outpatients.*.limit.required' => 'limit field is required!',
+        'outpatients.*.max_fam_size_id.required' => 'max family size field is required!',
+        'maternities.*.limit.required' => 'limit field is required!',
+        'maternities.*.max_fam_size_id.required' => 'max family size field is required!',
+        'dentals.*.limit.required' => 'limit field is required!',
+        'dentals.*.max_fam_size_id.required' => 'max family size field is required!',
+        'opticals.*.limit.required' => 'limit field is required!',
+        'opticals.*.max_fam_size_id.required' => 'max family size field is required!',
     ];
 
     public function save()
     { 
-        // $this->validate();
-        
-        // 
+        $this->validate();
 
-        return redirect(route('medical_insurers.create'))->with('success', 'Successfully updated');
+        try {
+            DB::beginTransaction();
+
+            // inpatients
+            $inpatients = $this->inpatients->toArray();
+            $inpatients = array_map(function($v) {
+                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
+                return array_replace($v, [
+                    'insurer_id' => $this->medical_insurer->id,
+                    'plan_id' => $this->plan_id,
+                    'user_id' => auth()->user()->id,
+                ]);
+            }, $inpatients);
+
+            // outpatients
+            $outpatients = $this->outpatients->toArray();
+            $outpatients = array_map(function($v) {
+                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
+                return array_replace($v, [
+                    'insurer_id' => $this->medical_insurer->id,
+                    'plan_id' => $this->plan_id,
+                    'user_id' => auth()->user()->id,
+                ]);
+            }, $outpatients);
+
+            // maternities
+            $maternities = $this->maternities->toArray();
+            $maternities = array_map(function($v) {
+                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
+                return array_replace($v, [
+                    'insurer_id' => $this->medical_insurer->id,
+                    'plan_id' => $this->plan_id,
+                    'user_id' => auth()->user()->id,
+                ]);
+            }, $maternities);
+
+            // dentals
+            $dentals = $this->dentals->toArray();
+            $dentals = array_map(function($v) {
+                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
+                return array_replace($v, [
+                    'insurer_id' => $this->medical_insurer->id,
+                    'plan_id' => $this->plan_id,
+                    'user_id' => auth()->user()->id,
+                ]);
+            }, $dentals);
+
+            // opticals
+            $opticals = $this->opticals->toArray();
+            $opticals = array_map(function($v) {
+                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
+                return array_replace($v, [
+                    'insurer_id' => $this->medical_insurer->id,
+                    'plan_id' => $this->plan_id,
+                    'user_id' => auth()->user()->id,
+                ]);
+            }, $opticals);
+
+            PlanOption::insert(array_merge($inpatients, $outpatients, $maternities, $dentals, $opticals));
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            return errorHandler('Error updating plan options', $th);
+        }
+        
+        return redirect(route('medical_insurers.index'))->with('success', 'Successfully updated plan options');
+    }
+
+    public function updatedPlanId($value)
+    {
+        $plan_options = PlanOption::where('plan_id', $value)->get();
+        $this->fill([
+            'inpatients' => new Collection($plan_options->where('class', 'Inpatient')),
+            'outpatients' => new Collection($plan_options->where('class', 'Outpatient')),
+            'maternities' => new Collection($plan_options->where('class', 'Maternity')),
+            'dentals' => new Collection($plan_options->where('class', 'Dental')),
+            'opticals' => new Collection($plan_options->where('class', 'Optical')),
+        ]);
     }
 
     public function addRow($class)
     {
         switch ($class) {
-            case 'inpatient': $this->inpatients->push($this->inpatients[0]); break;
-            case 'outpatient': $this->outpatients->push($this->outpatients[0]); break;
-            case 'maternity': $this->maternities->push($this->maternities[0]); break;
-            case 'dental': $this->dentals->push($this->dentals[0]); break;
-            case 'optical': $this->opticals->push($this->opticals[0]); break;
+            case 'inpatient': 
+                $this->inpatients->push(PlanOption::make());
+                break;
+            case 'outpatient':
+                $this->outpatients->push(PlanOption::make()); 
+                break;
+            case 'maternity': 
+                $this->maternities->push(PlanOption::make()); 
+                break;
+            case 'dental': 
+                $this->dentals->push(PlanOption::make()); 
+                break;
+            case 'optical': 
+                $this->opticals->push(PlanOption::make()); 
+                break;
         }
     }
 

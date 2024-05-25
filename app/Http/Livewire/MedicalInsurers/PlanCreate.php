@@ -14,16 +14,7 @@ class PlanCreate extends Component
 
     public function mount()
     { 
-        $plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
-        if ($plans->count()) {
-            $this->fill([
-                'inputs' => collect($plans->toArray()),
-            ]);
-        } else {
-            $this->fill([
-                'inputs' => collect([['plan_name' => '']]),
-            ]);
-        }
+        $this->inputs = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
     }
 
     protected $rules = [
@@ -31,7 +22,7 @@ class PlanCreate extends Component
     ];
     
     protected $messages = [
-        'inputs.*.plan_name.required' => 'This plan name field is required!',
+        'inputs.*.plan_name.required' => 'medical plan field is required!',
     ];
 
     public function save()
@@ -41,16 +32,17 @@ class PlanCreate extends Component
         try {
             DB::beginTransaction();
 
-            $data = array_map(function($v) {
+            $inputs = $this->inputs->toArray();
+            $inputs = array_map(function($v) {
                 return [
                     'plan_name' => $v['plan_name'],
                     'insurer_id' => $this->medical_insurer->id,
                     'user_id' => auth()->user()->id,
                 ];
-            }, $this->inputs->toArray());
+            }, $inputs);
             
             $this->medical_insurer->plans()->delete();
-            MedicalPlan::insert($data);
+            MedicalPlan::insert($inputs);
 
             DB::commit();
         } catch (\Throwable $th) {
@@ -62,7 +54,7 @@ class PlanCreate extends Component
 
     public function addRow()
     {
-        $this->inputs->push(['plan_name' => '']);
+        $this->inputs->push(MedicalPlan::make());
     }
 
     public function removeRow($key)

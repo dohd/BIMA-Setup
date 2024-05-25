@@ -3,17 +3,17 @@
 namespace App\Models\medical_insurers\Traits;
 
 use App\Models\medical_insurers\MedicalInsurer;
-use App\Models\medical_insurers\PlanOption;
+use App\Models\medical_insurers\MedicalPlan;
 
-trait MedicalPlanRelationship
+trait PlanOptionRelationship
 {
     public function medical_insurer()
     {
         return $this->belongsTo(MedicalInsurer::class, 'insurer_id');
     }
 
-    public function plan_options()
+    public function medical_plan()
     {
-        return $this->hasMany(PlanOption::class, 'plan_id');
+        return $this->belongsTo(MedicalPlan::class, 'plan_id');
     }
 }

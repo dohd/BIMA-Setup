@@ -1,12 +1,12 @@
 <form>
     @csrf
     <div class="row mb-3">
-        <div class="col-md-6 col-12" wire:ignore>
+        <div class="col-md-6 col-12">
             <label for="medical_plans">Medical Plan<span class="text-danger">*</span></label>
-            <select wire:model="plan_id" class="form-select" data-placeholder="Choose Medical Plan">
+            <select wire:model="plan_id" class="form-select" required>
                 <option value="">-- Choose Medical Plan --</option>
                 @foreach ($medical_plans as $i => $item)
-                    <option value="{{ @$item->id }}">{{ @$item->plan_name }}</option>
+                    <option value="{{ $item['id'] }}">{{ $item['plan_name'] }}</option>
                 @endforeach
             </select>
             @error('plan_id')<span class="text-danger">{{ $message }}</span>@enderror
@@ -16,7 +16,7 @@
     <!-- Inpatient Options -->
     <fieldset class="border rounded-3 p-3">
         <legend class="float-none w-auto px-1 fs-5">Inpatient</legend>
-        <div class="row" data-repeater-list="inpatient-opts">
+        <div class="row">
             @foreach ($inpatients as $i => $value)
                 <div wire:key="inpatients-{{$i}}" class="col-md-12 col-12 my-1 inpatient-opt">
                     <div class="row mb-2">
@@ -24,37 +24,28 @@
                             <div class="row">
                                 <label for="label">Label</label>
                                 <div class="col-12">
-                                    <input type="text" wire:model.defer="inpatients.{{$i}}.inpatient_label" class="form-control" placeholder="Label">
+                                    <input type="text" wire:model.defer="inpatients.{{$i}}.label" class="form-control" placeholder="Label">
                                 </div>
-                                @error('inpatients.'.$i.'.inpatient_label')<span class="text-danger">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="row">
-                                <label for="label">Option<span class="text-danger">*</span></label>
-                                <div class="col-12">
-                                    <input type="number" wire:model.defer="inpatients.{{$i}}.inpatient_option" class="form-control" placeholder="Amount">
-                                </div>
-                                @error('inpatients.'.$i.'.inpatient_option')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('inpatients.'.$i.'.label')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Inpatient Limit<span class="text-danger">*</span></label>
                                 <div class="col-12">
-                                    <input type="number" wire:model.defer="inpatients.{{$i}}.inpatient_limit" class="form-control" placeholder="Amount">
+                                    <input type="number" wire:model.defer="inpatients.{{$i}}.limit" class="form-control" placeholder="Amount" required>
                                 </div>
-                                @error('inpatients.'.$i.'.inpatient_limit')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('inpatients.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
-                                    <select wire:key="max-fam-sizes-{{$i}}" wire:model.defer="inpatients.{{$i}}.max_fam_size" class="form-select" data-placeholder="Choose Size" required>
-                                        <option wire:key="opt-max-fam-sizes-{{$i}}" value="">-- Choose Size --</option>
-                                        @foreach ($max_fam_sizes as $j => $item)
-                                            <option wire:key="opt-max-fam-sizes-{{$i+1}}" value="{{ @$item->id }}">{{ @$item->unit }}</option>
+                                    <select wire:model.defer="inpatients.{{$i}}.max_fam_size_id" class="form-select" data-placeholder="Choose Size">
+                                        <option value="" selected>-- Choose Size --</option>
+                                        @foreach ($max_fam_sizes as $item)
+                                            <option value="{{ $item['id'] }}">{{ $item['unit'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -62,11 +53,11 @@
                             </div>
                         </div>
                         @if ($i > 0)
-                        <div class="col-md-1 pt-4">
-                            <span class="badge bg-danger text-white" role="button" wire:click="removeRow('inpatient', {{$i}})">
-                                Delete
-                            </span>
-                        </div>
+                            <div class="col-md-1 pt-4">
+                                <span class="badge bg-danger text-white" role="button" wire:click="removeRow('inpatient', {{$i}})">
+                                    Delete
+                                </span>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -92,37 +83,29 @@
                             <div class="row">
                                 <label for="label">Label</label>
                                 <div class="col-12">
-                                    <input type="text" wire:model.defer="outpatients.{{$i}}.outpatient_label" class="form-control" placeholder="Label">
+                                    <input type="text" wire:model.defer="outpatients.{{$i}}.label" class="form-control" placeholder="Label">
                                 </div>
-                                @error('outpatients.'.$i.'.outpatient_label')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('outpatients.'.$i.'.label')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="row">
-                                <label for="label">Option<span class="text-danger">*</span></label>
-                                <div class="col-12">
-                                    <input type="number" wire:model.defer="outpatients.{{$i}}.outpatient_option" class="form-control" placeholder="Amount">
-                                </div>
-                                @error('outpatients.'.$i.'.outpatient_option')<span class="text-danger">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
+                        
                         <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Outpatient Limit<span class="text-danger">*</span></label>
                                 <div class="col-12">
-                                    <input type="number" wire:model.defer="outpatients.{{$i}}.outpatient_limit" class="form-control" placeholder="Amount">
+                                    <input type="number" wire:model.defer="outpatients.{{$i}}.limit" class="form-control" placeholder="Amount" required>
                                 </div>
-                                @error('outpatients.'.$i.'.outpatient_limit')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('outpatients.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
-                                    <select wire:key="max-fam-sizes-{{$i}}" wire:model.defer="outpatients.{{$i}}.max_fam_size" class="form-select" data-placeholder="Choose Size" required>
-                                        <option value=""></option>
+                                    <select wire:model.defer="outpatients.{{$i}}.max_fam_size_id" class="form-select" required>
+                                        <option value="" selected>-- Choose Size --</option>
                                         @foreach ($max_fam_sizes as $j => $item)
-                                            <option value="{{ @$item->id }}">{{ @$item->unit }}</option>
+                                            <option value="{{ $item['id'] }}">{{ $item['unit'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -151,7 +134,7 @@
 
     <!-- Maternity Options -->
     <fieldset class="border rounded-3 p-3">
-        <legend class="float-none w-auto px-1 fs-5">Mertanity</legend>
+        <legend class="float-none w-auto px-1 fs-5">Maternity</legend>
         <div class="row" data-repeater-list="maternity-opts">
             @foreach ($maternities as $i => $value)
                 <div wire:key="maternities-{{$i}}" class="col-md-12 col-12 my-1 maternity-opt">
@@ -160,37 +143,29 @@
                             <div class="row">
                                 <label for="label">Label</label>
                                 <div class="col-12">
-                                    <input type="text" wire:model.defer="maternities.{{$i}}.maternity_label" class="form-control" placeholder="Label">
+                                    <input type="text" wire:model.defer="maternities.{{$i}}.label" class="form-control" placeholder="Label">
                                 </div>
-                                @error('maternities.'.$i.'.maternity_label')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('maternities.'.$i.'.label')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="row">
-                                <label for="label">Option<span class="text-danger">*</span></label>
-                                <div class="col-12">
-                                    <input type="number" wire:model.defer="maternities.{{$i}}.maternity_option" class="form-control" placeholder="Amount">
-                                </div>
-                                @error('maternities.'.$i.'.maternity_option')<span class="text-danger">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
+                    
                         <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Mertanity Limit<span class="text-danger">*</span></label>
                                 <div class="col-12">
-                                    <input type="number" wire:model.defer="maternities.{{$i}}.maternity_limit" class="form-control" placeholder="Amount">
+                                    <input type="number" wire:model.defer="maternities.{{$i}}.limit" class="form-control" placeholder="Amount" required>
                                 </div>
-                                @error('maternities.'.$i.'.maternity_limit')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('maternities.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
-                                    <select wire:key="max-fam-sizes-{{$i}}" wire:model.defer="maternities.{{$i}}.max_fam_size" class="form-select" data-placeholder="Choose Size" required>
-                                        <option value=""></option>
+                                    <select wire:model.defer="maternities.{{$i}}.max_fam_size_id" class="form-select" required>
+                                        <option value="">-- Choose Size --</option>
                                         @foreach ($max_fam_sizes as $j => $item)
-                                            <option value="{{ @$item->id }}">{{ @$item->unit }}</option>
+                                            <option value="{{ $item['id'] }}">{{ $item['unit'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -228,37 +203,29 @@
                             <div class="row">
                                 <label for="label">Label</label>
                                 <div class="col-12">
-                                    <input type="text" wire:model.defer="dentals.{{$i}}.dental_label" class="form-control" placeholder="Label">
+                                    <input type="text" wire:model.defer="dentals.{{$i}}.label" class="form-control" placeholder="Label">
                                 </div>
-                                @error('dentals.'.$i.'.dental_label')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('dentals.'.$i.'.label')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="row">
-                                <label for="label">Option<span class="text-danger">*</span></label>
-                                <div class="col-12">
-                                    <input type="number" wire:model.defer="dentals.{{$i}}.dental_option" class="form-control" placeholder="Amount">
-                                </div>
-                                @error('dentals.'.$i.'.dental_option')<span class="text-danger">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
+                        
                         <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Dental Limit<span class="text-danger">*</span></label>
                                 <div class="col-12">
-                                    <input type="number" wire:model.defer="dentals.{{$i}}.dental_limit" class="form-control" placeholder="Amount">
+                                    <input type="number" wire:model.defer="dentals.{{$i}}.limit" class="form-control" placeholder="Amount" required>
                                 </div>
-                                @error('dentals.'.$i.'.dental_limit')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('dentals.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
-                                    <select wire:key="max-fam-sizes-{{$i}}" wire:model.defer="dentals.{{$i}}.max_fam_size" class="form-select" data-placeholder="Choose Size" required>
-                                        <option value=""></option>
+                                    <select wire:model.defer="dentals.{{$i}}.max_fam_size_id" class="form-select" required>
+                                        <option value="">-- Choose Size --</option>
                                         @foreach ($max_fam_sizes as $j => $item)
-                                            <option value="{{ @$item->id }}">{{ @$item->unit }}</option>
+                                            <option value="{{ $item['id'] }}">{{ $item['unit'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -296,39 +263,32 @@
                             <div class="row">
                                 <label for="label">Label</label>
                                 <div class="col-12">
-                                    <input type="text" wire:model.defer="opticals.{{$i}}.optical_label" class="form-control" placeholder="Label">
+                                    <input type="text" wire:model.defer="opticals.{{$i}}.label" class="form-control" placeholder="Label">
                                 </div>
-                                @error('opticals.'.$i.'.optical_label')<span class="text-danger">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="row">
-                                <label for="label">Option<span class="text-danger">*</span></label>
-                                <div class="col-12">
-                                    <input type="number" wire:model.defer="opticals.{{$i}}.optical_option" class="form-control" placeholder="Amount">
-                                </div>
-                                @error('opticals.'.$i.'.optical_option')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('opticals.'.$i.'.label')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Optical Limit<span class="text-danger">*</span></label>
                                 <div class="col-12">
-                                    <input type="number" wire:model.defer="opticals.{{$i}}.optical_limit" class="form-control" placeholder="Amount">
+                                    <input type="number" wire:model.defer="opticals.{{$i}}.limit" class="form-control" placeholder="Amount" required>
                                 </div>
-                                @error('opticals.'.$i.'.optical_limit')<span class="text-danger">{{ $message }}</span>@enderror
+                                @error('opticals.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
-                                    <select wire:key="max-fam-sizes-{{$i}}" wire:model.defer="opticals.{{$i}}.max_fam_size" class="form-select" data-placeholder="Choose Size" required>
-                                        <option value=""></option>
-                                        @foreach ($max_fam_sizes as $j => $item)
-                                            <option value="{{ @$item->id }}">{{ @$item->unit }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="col-12" wire:ignore>
+                                        <select wire:model.defer="opticals.{{$i}}.max_fam_size_id" class="form-select" required>
+                                            <option value="">-- Choose Size --</option>
+                                            @foreach ($max_fam_sizes as $j => $item)
+                                                <option value="{{ $item['id'] }}">{{ $item['unit'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                                 @error('opticals.'.$i.'.max_fam_size_id')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
@@ -358,4 +318,3 @@
         <button type="button" wire:click="save" class="btn btn-primary">Save & Continue >></button>
     </div>
 </form>
-
