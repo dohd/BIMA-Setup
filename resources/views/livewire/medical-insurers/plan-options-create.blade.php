@@ -38,7 +38,7 @@
                                 @error('inpatients.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
@@ -99,7 +99,7 @@
                                 @error('outpatients.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
@@ -159,7 +159,7 @@
                                 @error('maternities.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
@@ -219,7 +219,7 @@
                                 @error('dentals.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>
@@ -278,7 +278,7 @@
                                 @error('opticals.'.$i.'.limit')<span class="text-danger">{{ $message }}</span>@enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="row">
                                 <label for="label">Maximum Family Size<span class="text-danger">*</span></label>
                                 <div class="col-12" wire:ignore>

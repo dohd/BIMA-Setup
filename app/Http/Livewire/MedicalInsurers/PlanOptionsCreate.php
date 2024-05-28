@@ -71,79 +71,65 @@ class PlanOptionsCreate extends Component
     public function save()
     { 
         $this->validate();
+        $medical_insurer_id = $this->medical_insurer->id;
+        $plan_id = $this->plan_id;
 
         try {
             DB::beginTransaction();
 
+            function savePlanOption($input_arr, $medical_insurer_id, $plan_id) {
+                // delete omitted rows
+                $class = current($input_arr)['class'];
+                $item_ids = array_map(fn($v) => @$v['id'], $input_arr);
+                if ($item_ids) {
+                    PlanOption::doesntHave('rate_variables')
+                    ->where('plan_id', $plan_id)
+                    ->where('class', $class)
+                    ->whereNotIn('id', $item_ids)
+                    ->delete();
+                }
+                
+                foreach ($input_arr as $key => $value) {
+                    $value1 = Arr::only($value, ['id', 'class', 'label', 'limit', 'max_fam_size_id']);
+                    $value1 = array_replace($value1, [
+                        'insurer_id' => $medical_insurer_id,
+                        'plan_id' => $plan_id,
+                        'user_id' => auth()->user()->id,
+                        'limit' => numberClean(@$value1['limit']),
+                    ]);
+                    
+                    $plan_option = PlanOption::firstOrNew(['id' => @$value1['id']]);
+                    $plan_option->fill($value1);
+                    $plan_option->save();
+                }    
+            }
+
             // inpatients
             $inpatients = $this->inpatients->toArray();
-            $inpatients = array_map(function($v) {
-                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
-                return array_replace($v, [
-                    'insurer_id' => $this->medical_insurer->id,
-                    'plan_id' => $this->plan_id,
-                    'user_id' => auth()->user()->id,
-                ]);
-            }, $inpatients);
+            savePlanOption($inpatients, $medical_insurer_id, $plan_id);
 
             // outpatients
             $outpatients = $this->outpatients->toArray();
-            $outpatients = array_map(function($v) {
-                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
-                return array_replace($v, [
-                    'insurer_id' => $this->medical_insurer->id,
-                    'plan_id' => $this->plan_id,
-                    'user_id' => auth()->user()->id,
-                ]);
-            }, $outpatients);
+            savePlanOption($outpatients, $medical_insurer_id, $plan_id);
 
             // maternities
             $maternities = $this->maternities->toArray();
-            $maternities = array_map(function($v) {
-                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
-                return array_replace($v, [
-                    'insurer_id' => $this->medical_insurer->id,
-                    'plan_id' => $this->plan_id,
-                    'user_id' => auth()->user()->id,
-                ]);
-            }, $maternities);
+            savePlanOption($maternities, $medical_insurer_id, $plan_id);
 
             // dentals
             $dentals = $this->dentals->toArray();
-            $dentals = array_map(function($v) {
-                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
-                return array_replace($v, [
-                    'insurer_id' => $this->medical_insurer->id,
-                    'plan_id' => $this->plan_id,
-                    'user_id' => auth()->user()->id,
-                ]);
-            }, $dentals);
+            savePlanOption($dentals, $medical_insurer_id, $plan_id);
 
             // opticals
             $opticals = $this->opticals->toArray();
-            $opticals = array_map(function($v) {
-                $v = Arr::only($v, ['class', 'label', 'limit', 'max_fam_size_id']);
-                return array_replace($v, [
-                    'insurer_id' => $this->medical_insurer->id,
-                    'plan_id' => $this->plan_id,
-                    'user_id' => auth()->user()->id,
-                ]);
-            }, $opticals);
-            
-            $inputs = array_merge($inpatients, $outpatients, $maternities, $dentals, $opticals);
-            $inputs = array_map(function($v) {
-                $v['limit'] = numberClean($v['limit']);
-                return $v;
-            }, $inputs);
-            PlanOption::where('plan_id', $this->plan_id)->delete();
-            PlanOption::insert($inputs);
+            savePlanOption($opticals, $medical_insurer_id, $plan_id);
 
             DB::commit();
         } catch (\Throwable $th) {
             return errorHandler('Error updating plan options', $th);
         }
         
-        return redirect(route('medical_insurers.index'))->with('success', 'Successfully updated plan options');
+        return redirect(route('medical_insurers.show', $this->medical_insurer))->with('success', 'Successfully updated plan options');
     }
 
     public function updatedPlanId($value)
