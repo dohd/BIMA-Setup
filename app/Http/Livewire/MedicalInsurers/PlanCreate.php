@@ -3,47 +3,58 @@
 namespace App\Http\Livewire\MedicalInsurers;
 
 use App\Models\medical_insurers\MedicalPlan;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class PlanCreate extends Component
 {
     public $medical_insurer;
-    public Collection $inputs;
+    public $medical_plans = [];
 
     public function mount()
     { 
-        $this->inputs = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
-        if (!$this->inputs->count()) $this->inputs = new Collection([MedicalPlan::make()]);
+        $this->medical_plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get()->toArray();
+        if (!count($this->medical_plans)) $this->medical_plans[] = MedicalPlan::make(['plan_name' => '']);
     }
 
     protected $rules = [
-        'inputs.*.plan_name' => 'required',
+        'medical_plans.*.plan_name' => 'required',
     ];
     
     protected $messages = [
-        'inputs.*.plan_name.required' => 'medical plan field is required!',
+        'medical_plans.*.plan_name.required' => 'medical plan field is required!',
     ];
 
     public function save()
     { 
         $this->validate();        
-        
+        $insurer_id = $this->medical_insurer->id;
+
         try {
             DB::beginTransaction();
+            $input_arr = $this->medical_plans;
 
-            $inputs = $this->inputs->toArray();
-            $inputs = array_map(function($v) {
-                return [
-                    'plan_name' => $v['plan_name'],
+            // delete omitted rows
+            $item_ids = array_map(fn($v) => @$v['id'], $input_arr);
+            if ($item_ids) {
+                MedicalPlan::doesntHave('plan_options')
+                ->where('insurer_id', $insurer_id)
+                ->whereNotIn('id', $item_ids)
+                ->delete();
+            }
+
+            foreach ($input_arr as $key => $value) {
+                $value1 = Arr::only($value, ['id', 'plan_name']);
+                $value1 = array_replace($value1, [
                     'insurer_id' => $this->medical_insurer->id,
                     'user_id' => auth()->user()->id,
-                ];
-            }, $inputs);
-            
-            $this->medical_insurer->plans()->delete();
-            MedicalPlan::insert($inputs);
+                ]);
+                
+                $medical_plan = MedicalPlan::firstOrNew(['id' => @$value1['id']]);
+                $medical_plan->fill($value1);
+                $medical_plan->save();
+            } 
 
             DB::commit();
         } catch (\Throwable $th) {
@@ -55,12 +66,12 @@ class PlanCreate extends Component
 
     public function addRow()
     {
-        $this->inputs->push(MedicalPlan::make());
+        $this->medical_plans[] = MedicalPlan::make(['plan_name' => '']);
     }
 
     public function removeRow($key)
     {
-        $this->inputs->pull($key);
+        array_splice($this->medical_plans, $key, 1);
     }
 
     public function render()

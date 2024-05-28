@@ -1,9 +1,9 @@
 <form>
     @csrf
-    @foreach ($inputs as $i => $value)
-        <div class="row mb-2" key="{{$i}}">
+    @foreach ($medical_plans as $i => $value)
+        <div class="row mb-2">
             <div class="col-md-6 col-12">
-                <input type="text" id="plan-name-{{$i}}" wire:model.defer="inputs.{{$i}}.plan_name" class="form-control" placeholder="Name of Medical Plan*">
+                <input type="text" wire:model.defer="medical_plans.{{$i}}.plan_name" class="form-control" placeholder="Name of Medical Plan*">
             </div>
             @if ($i > 0)
                 <div class="col-md-1 pt-1">
@@ -12,7 +12,7 @@
                     </span>
                 </div>
             @endif
-            @error('inputs.'.$i.'.plan_name')<span class="text-danger">{{ $message }}</span>@enderror
+            @error('medical_plans.'.$i.'.plan_name')<span class="text-danger">{{ $message }}</span>@enderror
         </div>
     @endforeach
     
