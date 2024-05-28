@@ -3,8 +3,6 @@
 namespace App\Http\Livewire\MedicalInsurers;
 
 use App\Models\medical_insurers\MedicalInsurer;
-use Faker\Provider\Medical;
-use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class InsurerCreate extends Component
@@ -45,7 +43,7 @@ class InsurerCreate extends Component
             return errorHandler('Error creating medical insurer', $th);
         }
         
-        return redirect(route('medical_insurers.create'))->with('success', 'Successfully saved');
+        return redirect(route('medical_insurers.index'))->with('success', 'Successfully saved');
     }
 
     public function update(MedicalInsurer $medical_insurer)
@@ -61,7 +59,7 @@ class InsurerCreate extends Component
             return errorHandler('Error updating medical insurer', $th);
         }
         
-        return redirect(route('medical_insurers.create'))->with('success', 'Successfully updated');
+        return redirect(route('medical_insurers.index'))->with('success', 'Successfully updated');
     }
 
     public function render()

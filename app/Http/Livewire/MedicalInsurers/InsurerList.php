@@ -56,13 +56,17 @@ class InsurerList extends Component
 
     public function delete(MedicalInsurer $medical_insurer)
     { 
+        if ($medical_insurer->plans->count()) 
+            return redirect(route('medical_insurers.index'))
+                ->with('error', 'Cannot delete medical insurer that has plans');
+
         try {
             $medical_insurer->delete();
         } catch (\Throwable $th) {
             return errorHandler('Error deleting medical insurer', $th);
         }
 
-        return redirect(route('medical_insurers.create'))->with('success', 'Successfully deleted');
+        return redirect(route('medical_insurers.index'))->with('success', 'Successfully deleted');
     }
 
     public function render()
