@@ -18,7 +18,7 @@
         <legend class="float-none w-auto px-1 fs-5">Inpatient</legend>
         <div class="row">
             @foreach ($inpatients as $i => $value)
-                <div wire:key="inpatients-{{$i}}" class="col-md-12 col-12 my-1 inpatient-opt">
+                <div class="col-md-12 col-12 my-1 inpatient-opt">
                     <div class="row mb-2">
                         <div class="col-md-3">
                             <div class="row">
@@ -61,6 +61,7 @@
                         @endif
                     </div>
                 </div>
+                <input type="hidden" wire:model.defer="inpatients.{{$i}}.class" value="Inpatient">
             @endforeach
         </div>   
         <div class="row mb-3">

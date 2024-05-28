@@ -129,8 +129,14 @@ class PlanOptionsCreate extends Component
                     'user_id' => auth()->user()->id,
                 ]);
             }, $opticals);
-
-            PlanOption::insert(array_merge($inpatients, $outpatients, $maternities, $dentals, $opticals));
+            
+            $inputs = array_merge($inpatients, $outpatients, $maternities, $dentals, $opticals);
+            $inputs = array_map(function($v) {
+                $v['limit'] = numberClean($v['limit']);
+                return $v;
+            }, $inputs);
+            PlanOption::where('plan_id', $this->plan_id)->delete();
+            PlanOption::insert($inputs);
 
             DB::commit();
         } catch (\Throwable $th) {
@@ -143,32 +149,42 @@ class PlanOptionsCreate extends Component
     public function updatedPlanId($value)
     {
         $plan_options = PlanOption::where('plan_id', $value)->get();
-        $this->fill([
-            'inpatients' => new Collection($plan_options->where('class', 'Inpatient')),
-            'outpatients' => new Collection($plan_options->where('class', 'Outpatient')),
-            'maternities' => new Collection($plan_options->where('class', 'Maternity')),
-            'dentals' => new Collection($plan_options->where('class', 'Dental')),
-            'opticals' => new Collection($plan_options->where('class', 'Optical')),
-        ]);
+        if ($plan_options->count()) {
+            $this->fill([
+                'inpatients' => new Collection($plan_options->where('class', 'Inpatient')),
+                'outpatients' => new Collection($plan_options->where('class', 'Outpatient')),
+                'maternities' => new Collection($plan_options->where('class', 'Maternity')),
+                'dentals' => new Collection($plan_options->where('class', 'Dental')),
+                'opticals' => new Collection($plan_options->where('class', 'Optical')),
+            ]);
+        } else {
+            $this->fill([
+                'inpatients' => new Collection([PlanOption::make()]),
+                'outpatients' => new Collection([PlanOption::make()]),
+                'maternities' => new Collection([PlanOption::make()]),
+                'dentals' => new Collection([PlanOption::make()]),
+                'opticals' => new Collection([PlanOption::make()]),
+            ]);
+        }
     }
 
     public function addRow($class)
     {
         switch ($class) {
             case 'inpatient': 
-                $this->inpatients->push(PlanOption::make());
+                $this->inpatients->push(PlanOption::make(['class' => 'Inpatient']));
                 break;
             case 'outpatient':
-                $this->outpatients->push(PlanOption::make()); 
+                $this->outpatients->push(PlanOption::make(['class' => 'Outpatient'])); 
                 break;
             case 'maternity': 
-                $this->maternities->push(PlanOption::make()); 
+                $this->maternities->push(PlanOption::make(['class' => 'Maternity'])); 
                 break;
             case 'dental': 
-                $this->dentals->push(PlanOption::make()); 
+                $this->dentals->push(PlanOption::make(['class' => 'Dental'])); 
                 break;
             case 'optical': 
-                $this->opticals->push(PlanOption::make()); 
+                $this->opticals->push(PlanOption::make(['class' => 'Optical'])); 
                 break;
         }
     }

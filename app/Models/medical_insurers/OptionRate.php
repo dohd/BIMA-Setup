@@ -2,18 +2,18 @@
 
 namespace App\Models\medical_insurers;
 
-use App\Models\medical_insurers\Traits\PlanOptionRelationship;
+use App\Models\medical_insurers\Traits\OptionRateRelationship;
 use Illuminate\Database\Eloquent\Model;
 
-class PlanOption extends Model
+class OptionRate extends Model
 {
-    use PlanOptionRelationship;   
+    use OptionRateRelationship;   
 
     /**
      * The database table used by the model.
      * @var string
      */
-    protected $table = 'medical_plan_options';
+    protected $table = 'medical_option_rates';
 
     /**
      * Mass Assignable fields of model

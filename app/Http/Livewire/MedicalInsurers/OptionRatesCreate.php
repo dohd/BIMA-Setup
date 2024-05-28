@@ -2,14 +2,22 @@
 
 namespace App\Http\Livewire\MedicalInsurers;
 
+use App\Models\medical_insurers\MedicalPlan;
+use App\Models\medical_insurers\OptionRate;
+use App\Models\medical_insurers\PlanOption;
+use App\Models\medical_insurers\RateVariable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class OptionRatesCreate extends Component
 {
+    public $medical_insurer;
     public $plan_id;
-    public Collection $medical_plans;
-    public Collection $max_fam_sizes;
+    public $medical_plans = [];
+    public $plan_options = [];
+    
     public Collection $inpatients;
     public Collection $outpatients;
     public Collection $maternities;
@@ -18,59 +26,154 @@ class OptionRatesCreate extends Component
 
     public function mount()
     { 
+        $this->medical_plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
+        $this->plan_options = PlanOption::get();
+        
         $this->fill([
-            'medical_plans' => collect([
-                (object) ['id' => 1, 'plan_name' => 'Afya Jumla'],
-            ]),
-            'max_fam_sizes' => collect([
-                (object) ['id' => 1, 'unit' => 'M+'],
-            ]),
-            'inpatients' => collect([
-                (object) ['inpatient_label' => '', 'inpatient_option' => 0, 'inpatient_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'outpatients' => collect([
-                (object) ['outpatient_label' => '', 'outpatient_option' => 0, 'outpatient_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'maternities' => collect([
-                (object) ['maternity_label' => '', 'maternity_option' => 0, 'maternity_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'dentals' => collect([
-                (object) ['dental_label' => '', 'dental_option' => 0, 'dental_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
-            'opticals' => collect([
-                (object) ['optical_label' => '', 'optical_option' => 0, 'optical_limit' => 0, 'max_fam_size_id' => 1 ],
-            ]),
+            'inpatients' => new Collection([OptionRate::make(['class' => 'Inpatient'])]),
+            'outpatients' => new Collection([OptionRate::make(['class' => 'Outpatient'])]),
+            'maternities' => new Collection([OptionRate::make(['class' => 'Maternity'])]),
+            'dentals' => new Collection([OptionRate::make(['class' => 'Dental'])]),
+            'opticals' => new Collection([OptionRate::make(['class' => 'Optical'])]),
         ]);
     }
 
+
     protected $rules = [
-        // 'inputs.*.plan_name' => 'required',
         'plan_id' => 'required',
     ];
     
     protected $messages = [
-        // 'inputs.*.plan_name.required' => 'This plan name field is required!',
-        'plan_id.required' => 'This plan name field is required',
+        'plan_id.required' => 'medical plan field is required!',
     ];
 
     public function save()
     { 
-        // $this->validate();
-        
-        // 
+        $this->validate();
+        $medical_insurer_id = $this->medical_insurer->id;
+        $plan_id = $this->plan_id;
 
-        return redirect(route('medical_insurers.create'))->with('success', 'Successfully updated');
+        try {
+            DB::beginTransaction();
+
+            function saveOptionRate($input_arr, $medical_insurer_id, $plan_id) {
+                // delete omitted rows
+                $class = current($input_arr)['class'];
+                $item_ids = array_map(fn($v) => @$v['id'], $input_arr);
+                if ($item_ids) {
+                    $option_rates = OptionRate::where('plan_id', $plan_id)->where('class', $class)->whereNotIn('id', $item_ids)->get();
+                    foreach ($option_rates as $option_rate) {
+                        $option_rate->rate_variables()->delete();
+                        $option_rate->delete();
+                    }
+                }
+
+                foreach ($input_arr as $key => $value) {
+                    $value1 = Arr::only($value, ['id', 'class', 'row_index', 'limit_label', 'age_from', 'age_to']);
+                    $value1 = array_replace($value1, [
+                        'insurer_id' => $medical_insurer_id,
+                        'plan_id' => $plan_id,
+                        'user_id' => auth()->user()->id,
+                    ]);
+                    
+                    $option_rate = OptionRate::firstOrNew(['id' => @$value1['id']]);
+                    $option_rate->fill($value1);
+                    $option_rate->save();
+                    
+                    if (@$value['rate'] && @$value['plan_option_id']) {
+                        ksort($value['rate']);
+                        ksort($value['plan_option_id']);
+                        if (@$value['rate_id']) ksort($value['rate_id']);
+                        foreach ($value['rate'] as $key2 => $value2) {
+                            $rate_variable = RateVariable::firstOrNew(['id' => @$value['rate_id'][$key2]]);
+                            $rate_variable->fill([
+                                'option_rate_id' => $option_rate->id,
+                                'plan_option_id' => @$value['plan_option_id'][$key2],
+                                'rate' => numberClean($value2),
+                            ]);
+                            $rate_variable->save();
+                        }
+                    } else $option_rate->delete();
+                }
+            }
+
+            // inpatients
+            $inpatients = $this->inpatients->toArray();
+            saveOptionRate($inpatients, $medical_insurer_id, $plan_id);
+
+            // outpatients
+            $outpatients = $this->outpatients->toArray();
+            saveOptionRate($outpatients, $medical_insurer_id, $plan_id);
+
+            // maternities
+            $maternities = $this->maternities->toArray();
+            saveOptionRate($maternities, $medical_insurer_id, $plan_id);
+
+            // dentals
+            $dentals = $this->dentals->toArray();
+            saveOptionRate($dentals, $medical_insurer_id, $plan_id);
+
+            // opticals
+            $opticals = $this->opticals->toArray();
+            saveOptionRate($opticals, $medical_insurer_id, $plan_id);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            return errorHandler('Error updating option rates', $th);
+        }
+        
+        return redirect(route('medical_insurers.show', $this->medical_insurer))->with('success', 'Successfully updated option rates');
+    }
+
+    public function updatedPlanId($id)
+    {
+        $this->plan_options = PlanOption::where('plan_id', $id)->get();
+        $option_rates = OptionRate::where('plan_id', $id)->get()->map(function($v) {
+            $v['rate'] = $v->rate_variables->pluck('rate')->toArray();
+            $v['rate_id'] = $v->rate_variables->pluck('id')->toArray();
+            return $v;
+        });
+        
+        if ($option_rates->count()) {
+            $this->fill([
+                'inpatients' => new Collection($option_rates->where('class', 'Inpatient')),
+                'outpatients' => new Collection($option_rates->where('class', 'Outpatient')),
+                'maternities' => new Collection($option_rates->where('class', 'Maternity')),
+                'dentals' => new Collection($option_rates->where('class', 'Dental')),
+                'opticals' => new Collection($option_rates->where('class', 'Optical')),
+            ]);
+        } else {
+            $this->fill([
+                'inpatients' => new Collection([OptionRate::make(['class' => 'Inpatient'])]),
+                'outpatients' => new Collection([OptionRate::make(['class' => 'Outpatient'])]),
+                'maternities' => new Collection([OptionRate::make(['class' => 'Maternity'])]),
+                'dentals' => new Collection([OptionRate::make(['class' => 'Dental'])]),
+                'opticals' => new Collection([OptionRate::make(['class' => 'Optical'])]),
+            ]);
+        }
+        $this->dispatchBrowserEvent('updateIndex');
     }
 
     public function addRow($class)
     {
         switch ($class) {
-            case 'inpatient': $this->inpatients->push($this->inpatients[0]); break;
-            case 'outpatient': $this->outpatients->push($this->outpatients[0]); break;
-            case 'maternity': $this->maternities->push($this->maternities[0]); break;
-            case 'dental': $this->dentals->push($this->dentals[0]); break;
-            case 'optical': $this->opticals->push($this->opticals[0]); break;
+            case 'inpatient': 
+                $this->inpatients->push(OptionRate::make(['class' => 'Inpatient']));
+                break;
+            case 'outpatient':
+                $this->outpatients->push(OptionRate::make(['class' => 'Outpatient'])); 
+                break;
+            case 'maternity': 
+                $this->maternities->push(OptionRate::make(['class' => 'Maternity'])); 
+                break;
+            case 'dental': 
+                $this->dentals->push(OptionRate::make(['class' => 'Dental'])); 
+                break;
+            case 'optical': 
+                $this->opticals->push(OptionRate::make(['class' => 'Optical'])); 
+                break;
         }
+        $this->dispatchBrowserEvent('updateIndex');
     }
 
     public function removeRow($class, $key)
@@ -82,6 +185,7 @@ class OptionRatesCreate extends Component
             case 'dental': $this->dentals->pull($key); break;
             case 'optical': $this->opticals->pull($key); break;
         }
+        $this->dispatchBrowserEvent('updateIndex');
     }
 
     public function render()
