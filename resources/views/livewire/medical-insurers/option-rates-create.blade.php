@@ -320,7 +320,7 @@
 
         <hr>
         <div class="text-center">
-            <button type="button" wire:click="save" class="btn btn-primary">Save & Finish >></button>
+            <button type="button" wire:click="save" class="btn btn-primary">Save & Continue >></button>
         </div>
     </form>
 

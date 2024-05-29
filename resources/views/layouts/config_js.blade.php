@@ -72,7 +72,7 @@ $(() => {
         let inputId = $(this).attr('id').split('_')[0];
         let value = $(this).find('.ql-editor').html();
         if (value == '<p><br></p>') value = '';
-        $('#'+inputId).val(value);
+        $('#'+inputId).val(value).keyup();
     });
 });
 </script>
