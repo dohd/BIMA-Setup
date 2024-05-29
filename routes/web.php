@@ -2,11 +2,9 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\attendance\AttendanceController;
 use App\Http\Controllers\config\ConfigController;
 use App\Http\Controllers\medical_insurers\MedicalInsurersController;
 use App\Http\Controllers\user_profile\UserProfileController;
-use App\Http\Livewire\MedicalInsurer\Create;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -27,17 +25,10 @@ Route::get('/', [LoginController::class, 'index']);
 Route::get('logout', [LoginController::class, 'logout']);
 Route::group(['middleware' => 'auth'], function() {
     // Dashboard
-    Route::get('home', [HomeController::class, 'index'])->name('home');
+    Route::get('dashboard', [HomeController::class, 'index'])->name('home');
 
-    
     // Medical Insurers
     Route::resource('medical_insurers', MedicalInsurersController::class);
-
-
-
-
-    // Attendance
-    Route::resource('attendances', AttendanceController::class);
 
     // User Profiles
     Route::post('user_profiles/delete_profile_pic/{user}', [UserProfileController::class, 'delete_profile_pic'])->name('user_profiles.delete_profile_pic');
