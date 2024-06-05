@@ -41,7 +41,13 @@
                         <button class="nav-link" id="option-rts-tab" data-bs-toggle="tab" data-bs-target="#option-rts" type="button" role="tab" aria-controls="option-rts" aria-selected="true">
                             Option Rates <i class="bi bi-check2-circle"></i>
                         </button>
-                    </li>       
+                    </li>     
+                    <!-- shared rates -->
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="shared-rts-tab" data-bs-toggle="tab" data-bs-target="#shared-rts" type="button" role="tab" aria-controls="shared-rts" aria-selected="true">
+                            Shared Rates <i class="bi bi-check2-circle"></i>
+                        </button>
+                    </li>    
                     <!-- plan benefits -->
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="plan-benefit-tab" data-bs-toggle="tab" data-bs-target="#plan-benefit" type="button" role="tab" aria-controls="plan-benefit" aria-selected="true">
@@ -58,6 +64,9 @@
                     </div>
                     <div class="tab-pane fade show p-3" id="option-rts" role="tabpanel" aria-labelledby="option-rts-tab">
                         <livewire:medical-insurers.option-rates-create :medical_insurer="@$medical_insurer" />
+                    </div>
+                    <div class="tab-pane fade show p-3" id="shared-rts" role="tabpanel" aria-labelledby="shared-rts-tab">
+                        <livewire:medical-insurers.shared-rates-create :medical_insurer="@$medical_insurer" />
                     </div>
                     <div class="tab-pane fade show p-3" id="plan-benefit" role="tabpanel" aria-labelledby="plan-benefit-tab">
                         <livewire:medical-insurers.plan-benefits-create :medical_insurer="@$medical_insurer" />
