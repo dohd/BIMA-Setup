@@ -25,11 +25,7 @@ class PlanOptionsCreate extends Component
     public function mount()
     { 
         $this->medical_plans = MedicalPlan::where('insurer_id', @$this->medical_insurer->id)->get();
-        $this->max_fam_sizes = [
-            ['id' => 1, 'unit' => 'M+'],
-            ['id' => 2, 'unit' => 'M+2'],
-            ['id' => 3, 'unit' => 'M+3'],
-        ];
+        $this->max_fam_sizes = array_map(fn($v) => ['id' => $v+1, 'unit' => $v? 'M+'.$v : 'M'], range(0,15));
         
         $this->fill([
             'inpatients' => new Collection([PlanOption::make()]),
