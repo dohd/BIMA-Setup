@@ -50,15 +50,21 @@ class OptionRatesCreate extends Component
     public function save()
     { 
         $this->validate();
+
         $medical_insurer_id = $this->medical_insurer->id;
         $plan_id = $this->plan_id;
+        $inpatients = $this->inpatients->toArray();
+        $outpatients = $this->outpatients->toArray();
+        $maternities = $this->maternities->toArray();
+        $dentals = $this->dentals->toArray();
+        $opticals = $this->opticals->toArray();
 
         try {
             DB::beginTransaction();
 
-            function saveOptionRate($input_arr, $medical_insurer_id, $plan_id) {
+            $saveOptionRate = function ($input_arr) use($medical_insurer_id, $plan_id) {
                 // delete omitted rows
-                $class = current($input_arr)['class'];
+                $class = @current($input_arr)['class'];
                 $item_ids = array_map(fn($v) => @$v['id'], $input_arr);
                 if ($item_ids) {
                     $option_rates = OptionRate::where('plan_id', $plan_id)->where('class', $class)->whereNotIn('id', $item_ids)->get();
@@ -95,27 +101,13 @@ class OptionRatesCreate extends Component
                         }
                     } else $option_rate->delete();
                 }
-            }
+            };
 
-            // inpatients
-            $inpatients = $this->inpatients->toArray();
-            saveOptionRate($inpatients, $medical_insurer_id, $plan_id);
-
-            // outpatients
-            $outpatients = $this->outpatients->toArray();
-            saveOptionRate($outpatients, $medical_insurer_id, $plan_id);
-
-            // maternities
-            $maternities = $this->maternities->toArray();
-            saveOptionRate($maternities, $medical_insurer_id, $plan_id);
-
-            // dentals
-            $dentals = $this->dentals->toArray();
-            saveOptionRate($dentals, $medical_insurer_id, $plan_id);
-
-            // opticals
-            $opticals = $this->opticals->toArray();
-            saveOptionRate($opticals, $medical_insurer_id, $plan_id);
+            $saveOptionRate($inpatients);
+            $saveOptionRate($outpatients);
+            $saveOptionRate($maternities);
+            $saveOptionRate($dentals);
+            $saveOptionRate($opticals);
 
             DB::commit();
         } catch (\Throwable $th) {
