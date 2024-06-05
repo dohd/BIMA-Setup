@@ -36,19 +36,6 @@ class InsurerList extends Component
         return $this->render();
     }
 
-    public function updateCalc(MedicalInsurer $medical_insurer)
-    {
-        try {
-            if ($medical_insurer->calc_type == 'Normal') $medical_insurer->calc_type = 'M+';
-            else $medical_insurer->calc_type = 'Normal';
-            $medical_insurer->save();
-        } catch (\Throwable $th) {
-            //throw $th;
-        }
-
-        return $this->render();
-    }
-
     public function confirmDelete(MedicalInsurer $medical_insurer)
     {
         $this->dispatchBrowserEvent('confirmDelete', ['item_id' => $medical_insurer->id]);

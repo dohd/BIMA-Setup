@@ -6,7 +6,6 @@
                     <th width="5%" class="text-center">#</th>
                     <th>Name</th>
                     <th width="8%">Status</th>
-                    <th>Calc Type</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -14,12 +13,8 @@
                 @foreach ($medical_insurers as $i => $row)
                     <tr>
                         <th class="text-center">{{ $i+1 }}</th>
-                        <td><a href="{{ route('medical_insurers.show', $row->id) }}" class="{{ @$medical_insurer->id == $row->id? 'text-black fw-bold' : 'text-primary' }}" data-toggle="tooltip" title="Configure #{{$i+1}}">{{ $row->name }}</a></td>
+                        <td><a href="{{ route('medical_insurers.show', $row->id) }}" class="{{ @$medical_insurer->id == $row->id? 'text-black fw-bold' : 'text-primary' }}">{{ $row->name }}</a></td>
                         <td><input type="checkbox" wire:click="updateStatus({{$row->id}})" name="status" {{ $row->status? 'checked' : '' }}></td>
-                        <td>
-                            <input type="radio" wire:click="updateCalc({{$row->id}})" name="calc-{{$i}}" {{ $row->calc_type == 'Normal' ? 'checked' : '' }}> Normal &nbsp;
-                            <input type="radio" wire:click="updateCalc({{$row->id}})" name="calc-{{$i}}" {{ $row->calc_type == 'M+' ? 'checked' : '' }}> M+
-                        </td>
                         <td>
                             <a href="#" wire:click="selectItem({{$row->id}}, 'edit')" class="text-warning fw-bold edit-row" role="button">Edit</a>&nbsp;|&nbsp;
                             <a href="#"  wire:click="confirmDelete({{$row->id}})" class="text-danger fw-bold">Delete</a>
@@ -28,15 +23,6 @@
                 @endforeach
             </tbody>
         </table>
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                window.addEventListener('confirmDelete', event => {
-                    if (confirm('Are you sure?')) {
-                        @this.emit('delete', event.detail.item_id);
-                    }
-                });
-            });
-        </script>
     </div>
     <!-- Insurer Create Modal & Form -->
     <div class="modal fade" id="create-modal" tabindex="-1" aria-labelledby="create_modal_label" aria-hidden="true">
@@ -50,4 +36,13 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.addEventListener('confirmDelete', event => {
+                if (confirm('Are you sure?')) {
+                    @this.emit('delete', event.detail.item_id);
+                }
+            });
+        });
+    </script>
 </div>
