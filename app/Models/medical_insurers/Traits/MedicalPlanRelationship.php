@@ -5,6 +5,7 @@ namespace App\Models\medical_insurers\Traits;
 use App\Models\medical_insurers\MedicalInsurer;
 use App\Models\medical_insurers\OptionRate;
 use App\Models\medical_insurers\PlanOption;
+use App\Models\medical_insurers\SharedRate;
 
 trait MedicalPlanRelationship
 {
@@ -21,5 +22,10 @@ trait MedicalPlanRelationship
     public function option_rates()
     {
         return $this->hasMany(OptionRate::class, 'plan_id');
+    }
+
+    public function shared_rates()
+    {
+        return $this->hasMany(SharedRate::class, 'plan_id');
     }
 }
