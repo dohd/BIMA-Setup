@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 /*
@@ -42,6 +43,11 @@ Route::group(['middleware' => 'auth:sanctum'], function() {
         return response()->json($medical_insurers);
     });
     Route::get('medical_insurers/{medical_insurer}', function(MedicalInsurer $medical_insurer) {
+        $medical_insurer['plans'] = $medical_insurer->plans()
+        ->with('plan_options', 'shared_rates')
+        ->with(['option_rates' => fn($q) => $q->with('rate_variables')->get()])
+        ->get();
+
         return response()->json($medical_insurer);
     });
     
@@ -51,6 +57,7 @@ Route::group(['middleware' => 'auth:sanctum'], function() {
         $medical_plans = MedicalPlan::where($input)->get();
         return response()->json($medical_plans);
     });
+
     // plan benefits
     Route::get('plan_benefits', function(Request $request) {
         $input = $request->only('plan_id');
@@ -72,65 +79,93 @@ Route::group(['middleware' => 'auth:sanctum'], function() {
 
     // quote details
     Route::post('quote_details', function(Request $request) {
-        $input = $request->only('insurer_id', 'plan_id', 'class');
-        $input = array_replace($input, [
-            'plan_id' => 11,
-            'plan_type' => 'per_person' ?: 'shared',
-            'class' => 'Inpatient',
-            'principal_age' => 30,
-            'spouse_age' => 40,
-            'children_count' => 2,
-            'limit' => 1000000,
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'plan_id' => 'required',
+            'plan_type' => 'required',
+            'class' => 'required',
+            'principal_age' => request('spouse_age')? 'nullable' : 'required',
+            'spouse_age' => request('principal_age')? 'nullable' : 'required',
+            'limit' => 'required',
         ]);
+        if ($validator->fails()) return response()->json($validator->messages());
 
+        $principal_age = $input['spouse_age'] > $input['principal_age'] ? $input['spouse_age'] : $input['principal_age'];
+        $medical_plan = MedicalPlan::find($input['plan_id']);
+        $plan_option = $medical_plan->plan_options()
+        ->where('class', $input['class'])
+        ->where('limit', $input['limit'])
+        ->first();
+        
         if ($input['plan_type'] == 'per_person') {
-            $medical_plan = MedicalPlan::find($input['plan_id']);
-            $plan_option = $medical_plan->plan_options()
+            if ($input['class'] == 'Inpatient') {
+                $principal_opt_rate = $medical_plan->option_rates()
+                ->where('limit_label', 'LIKE', '%principal%')
+                ->where('age_from', '<=', $principal_age)
+                ->where('age_to', '>=', $principal_age)
+                ->where('class', $input['class'])
+                ->first();
+                if ($principal_opt_rate) {
+                    $spouse_opt_rate = $medical_plan->option_rates()
+                    ->where('limit_label', 'LIKE', '%spouse%')
+                    ->where('class', $input['class'])
+                    ->where(function($q) use($principal_opt_rate) {
+                        $q->where('row_index', $principal_opt_rate->row_index+1)
+                        ->orWhere('row_index', $principal_opt_rate->row_index+2);
+                    })
+                    ->first();
+                    $child_opt_rate = $medical_plan->option_rates()
+                    ->where('limit_label', 'LIKE', '%child%')
+                    ->where('class', $input['class'])
+                    ->where(function($q) use($principal_opt_rate) {
+                        $q->where('row_index', $principal_opt_rate->row_index+1)
+                        ->orWhere('row_index', $principal_opt_rate->row_index+2);
+                    })
+                    ->first();
+                }
+            } else {
+                $principal_opt_rate = $medical_plan->option_rates()
+                ->where('age_from', '<=', $principal_age)
+                ->where('age_to', '>=', $principal_age)
+                ->where('class', $input['class'])
+                ->first();
+            }
+
+            $principal_rate_var = @$principal_opt_rate->rate_variables->where('plan_option_id', $plan_option->id)->first();
+            $spouse_rate_var = @$spouse_opt_rate->rate_variables->where('plan_option_id', $plan_option->id)->first();
+            $child_rate_var = @$child_opt_rate->rate_variables->where('plan_option_id', $plan_option->id)->first();
+            $data = [
+                'underwriter' => @$medical_plan->medical_insurer->name,
+                'medical_plan' => $medical_plan->plan_name,
+                'limit' => $input['limit'],
+                'plan_type' => $input['plan_type'],
+                'principal_premium' => +@$principal_rate_var->rate,
+                'spouse_premium' => +@$spouse_rate_var->rate,
+                'child_premium' => +@$child_rate_var->rate,
+            ];
+            $data['premium'] = $data['principal_premium'] + $data['spouse_premium'] + $data['child_premium'];
+        } 
+        elseif ($input['plan_type'] == 'shared') {
+            $principal_shared_rate = $medical_plan->shared_rates()
             ->where('class', $input['class'])
-            ->where('limit', $input['limit'])
-            ->first();
-            
-            $principal_age = $input['spouse_age'] > $input['principal_age'] ? $input['spouse_age'] : $input['principal_age'];
-            $principal_opt_rate = $medical_plan->option_rates()
+            ->where('label', 'LIKE', "{$plan_option->label}")
             ->where('age_from', '<=', $principal_age)
             ->where('age_to', '>=', $principal_age)
-            ->where('class', $input['class'])
             ->first();
-            if ($principal_opt_rate) {
-                $spouse_opt_rate = $medical_plan->option_rates()
-                ->where('limit_label', 'LIKE', '%spouse%')
-                ->where('class', $input['class'])
-                ->where(function($q) use($principal_opt_rate) {
-                    $q->where('row_index', $principal_opt_rate->row_index+1)
-                    ->orWhere('row_index', $principal_opt_rate->row_index+2);
-                })
-                ->first();
-                $child_opt_rate = $medical_plan->option_rates()
-                ->where('limit_label', 'LIKE', '%child%')
-                ->where('class', $input['class'])
-                ->where(function($q) use($principal_opt_rate) {
-                    $q->where('row_index', $principal_opt_rate->row_index+1)
-                    ->orWhere('row_index', $principal_opt_rate->row_index+2);
-                })
-                ->first();
 
-                $principal_rate_var = @$principal_opt_rate->rate_variables->where('plan_option_id', $plan_option->id)->first();
-                $spouse_rate_var = @$spouse_opt_rate->rate_variables->where('plan_option_id', $plan_option->id)->first();
-                $child_rate_var = @$child_opt_rate->rate_variables->where('plan_option_id', $plan_option->id)->first();
-                $data = [
-                    'underwriter' => @$medical_plan->medical_insurer->name,
-                    'medical_plan' => $medical_plan->plan_name,
-                    'limit' => $input['limit'],
-                    'plan_type' => $input['plan_type'],
-                    'principal_premium' => +@$principal_rate_var->rate,
-                    'spouse_premium' => +@$spouse_rate_var->rate,
-                    'child_premium' => +@$child_rate_var->rate,
-                ];
-                $data['premium'] = $data['principal_premium'] + $data['spouse_premium'] + $data['child_premium'];
-            }
-        
-        } elseif ($input['plan_type'] == 'shared') {
-
+            if ($input['children_count']) $principal_rate = @$principal_shared_rate['m'.$input['children_count']];
+            else $principal_rate = @$principal_shared_rate->m;
+    
+            $data = [
+                'underwriter' => @$medical_plan->medical_insurer->name,
+                'medical_plan' => $medical_plan->plan_name,
+                'limit' => $input['limit'],
+                'plan_type' => $input['plan_type'],
+                'principal_premium' => +$principal_rate,
+                'spouse_premium' => 0,
+                'child_premium' => 0,
+            ];
+            $data['premium'] = $data['principal_premium'] + $data['spouse_premium'] + $data['child_premium'];
         }
         
         return response()->json(@$data);
